@@ -2,7 +2,7 @@
    Project Name: Train Collision Avoidance System (TCAS)
    Author(s): Aryan Chavan, Benjamin Ponka
    Date Started: 2025-03-24            Submission Date: 2025-04-17
-   Version: V.1.08.a
+   Version: V.1.09.A
    Description: Second year Mechatronics Engineering Diploma Project in which a train collision avoidance system is made with basic sensors(IR, sonar), actuators(Servos) and microcontroller(Arduino Mega).
    Licence:
    Links:
@@ -12,12 +12,10 @@
 //Dependancies
 #include <Servo.h>
 
-#define LEDPIN 13  // indicator for the ir beams( if beam is broken the light turns on)
-
+#define LEDPIN 13  // indicator for the ir beams (if beam is broken the light turns on)
 
 // Setting up the Ir Pins
 int IRPins[15] = { 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36 };
-
 
 // Variables related to the IR sensor.
 // Try to put this in an array.
@@ -38,12 +36,10 @@ Servo myservo6;
 Servo myservo7;
 Servo myservo8;
 
-
 //
 int pairedSensors[] = { 1, 2, 9, 10, 11, 12, 13, 14 };
 int pairedOuter[] = { 1, 10, 11, 14 };
 int pairedInner[] = { 2, 9, 12, 13 };
-
 
 void setup() {
   // initialize the LED pin as an output:
@@ -57,7 +53,6 @@ void setup() {
 
   Serial.begin(9600);  // Serial monitor
 }
-
 
 // New Logic
 unsigned int Etimer = 1;  //Global timer (running eternally).
@@ -140,7 +135,6 @@ void loop() {  // Main Loop
         incomingFromTrack = sensor_state[i][2];  // the track number for where the train came in from.
 
         internalLogic3(servoNum, IrNum1, IrNum2, trackNumber1, trackNumber2, incomingFromTrack, currentIrPrevious);
-
         Serial.println("Case2 finish");
         break;
 
@@ -149,17 +143,13 @@ void loop() {  // Main Loop
         Serial.println("Case3");
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
-        a = Etimer - sensorTimes[0];
-
         //IrNum1 = 3; // approching IR unneeded
-
         trackNumber1 = 5;  // This is to check if something is in the inner loop, track 5
         trackNumber2 = 6;
         trackNumber3 = 7;
         trackNumber4 = 9;       // This is to check if something is approching the junction from track 9, or in the center loop
         incomingFromTrack = 2;  // This means that it was approching from track 2
         servoNum = 4;           // the servo that switches a counter-clockwise train into the inner loop.
-
 
         internalLogic4(servoNum, trackNumber1, trackNumber2, trackNumber3, trackNumber4, incomingFromTrack);
 
@@ -176,18 +166,12 @@ void loop() {  // Main Loop
         Serial.println("Case4 finish");
         break;
 
-        // case 5:   // Logic for IR sensor 6
-        //   Serial.println("Case2");
-        //   a = Etimer - sensorTimes[0];
-        //   IrNum1 = 2;
-        //   IrNum2 = 3;
-        //   trackNumber1 = 1;
-        //   trackNumber2 = 2;
-        //   if (a > timerDelay) {
-        //     internalLogic2(IrNum1, IrNum2, trackNumber1, trackNumber2);
-        //   }
-        //   Serial.println("Case2 finish");
-        //   break;
+      case 5:  // Logic for IR sensor 6
+        Serial.println("Case5");
+        sensorTimes[i] = Etimer;  // appends the trip time of the current sensor
+        a = Etimer - sensorTimes[1];
+        Serial.println("Case5 finish");
+        break;
 
         // case 6:   // Logic for IR sensor 7
         //   Serial.println("Case1");
@@ -203,51 +187,63 @@ void loop() {  // Main Loop
         Serial.println("Case7");
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
-        servoNum = 2;                        // servo number for this case.
-        IrNum1 = 7;                          // current ir
-        IrNum2 = 3;                          // opposing ir
+        servoNum = 5;  // servo number for this case.
+        IrNum1 = 7;    // current ir
+        IrNum2 = 3;    // opposing ir
         trackNumber1 = 0;
         trackNumber2 = 1;
-        incomingFromTrack = sensor_state[i][2];  // the track number for where the train came in from.
+        incomingFromTrack = sensor_state[i][3];  // the track number for where the train came in from.
 
         if (a > timerDelay) {
           internalLogic3(servoNum, IrNum1, IrNum2, trackNumber1, trackNumber2, incomingFromTrack, currentIrPrevious);
         }
         Serial.println("Case7 finish");
+
         break;
 
       case 8:  // Logic for IR sensor 9
+
         Serial.println("Case8");
-        a = Etimer - sensorTimes[1];
-        servoNum = 0;
+        currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
+        sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
+        a = Etimer - sensorTimes[9];
+        IrNum1 = 7;
+        IrNum2 = 6;
+        trackNumber1 = 2;
+        trackNumber2 = 4;
+        trackToUse = 9;  // change the init function for the ir to have the new track numbers. //sensor_states[i][2]
         if (a > timerDelay) {
-          internalLogic1(1, 2, servoNum);
+          internalLogic2(IrNum1, IrNum2, trackNumber1, trackNumber2, trackToUse);
         }
         Serial.println("Case8 finish");
+
         break;
 
-        // case 9:   // Logic for IR sensor 10
-        //   Serial.println("Case2");
-        //   a = Etimer - sensorTimes[0];
-        //   IrNum1 = 2;
-        //   IrNum2 = 3;
-        //   trackNumber1 = 1;
-        //   trackNumber2 = 2;
-        //   if (a > timerDelay) {
-        //     internalLogic2(IrNum1, IrNum2, trackNumber1, trackNumber2);
-        //   }
-        //   Serial.println("Case2 finish");
-        //   break;
+      case 9:  // Logic for IR sensor 10
+        Serial.println("Case9");
+        currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
+        sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
+        a = Etimer - sensorTimes[8];         //compares with Sensor 8,
+        servoNum = 4;
+        if (a > timerDelay) {
+          internalLogic1(4, 2, servoNum);  // this stays the same when mirrored, as they're both connected to the same 2 tracks
+        }
+        Serial.println("Case9 finish");
+        break;
 
-        // case 10:   // Logic for IR sensor 11
-        //   Serial.println("Case1");
-        //   a = Etimer - sensorTimes[1];
-        //   servoNum = 0;
-        //   if (a > timerDelay) {
-        //     internalLogic1(1, 2, servoNum);
-        //   }
-        //   Serial.println("Case1 finish");
-        //   break;
+      case 10:  // Logic for IR sensor 11
+        Serial.println("Case10");
+        a = Etimer - sensorTimes[i];
+        servoNum = 2;  // servo number for this case.
+        trackNumber1 = 6;
+        trackNumber2 = 7;
+        incomingFromTrack = sensor_state[i][2];  // the track number for where the train came in from.
+
+        if (a > timerDelay) {
+          internalLogic5(servoNum, trackNumber1, trackNumber2, incomingFromTrack);
+        }
+        Serial.println("Case10 finish");
+        break;
 
         // case 11:   // Logic for IR sensor 12
         //   Serial.println("Case2");
@@ -272,18 +268,19 @@ void loop() {  // Main Loop
         //   Serial.println("Case1 finish");
         //   break;
 
-        // case 13:   // Logic for IR sensor 14
-        //   Serial.println("Case2");
-        //   a = Etimer - sensorTimes[0];
-        //   IrNum1 = 2;
-        //   IrNum2 = 3;
-        //   trackNumber1 = 1;
-        //   trackNumber2 = 2;
-        //   if (a > timerDelay) {
-        //     internalLogic2(IrNum1, IrNum2, trackNumber1, trackNumber2);
-        //   }
-        //   Serial.println("Case2 finish");
-        //   break;
+      case 13:  // Logic for IR sensor 14
+        Serial.println("Case13");
+        a = Etimer - sensorTimes[i];
+        servoNum = 8;  // servo number for this case.
+        trackNumber1 = 6;
+        trackNumber2 = 7;
+        incomingFromTrack = sensor_state[i][2];  // the track number for where the train came in from.
+
+        if (a > timerDelay) {
+          internalLogic5(servoNum, trackNumber1, trackNumber2, incomingFromTrack);
+        }
+        Serial.println("Case13 finish");
+        break;
 
       case 14:  // Logic for IR sensor 15
         Serial.println("Case14");
@@ -299,8 +296,54 @@ void loop() {  // Main Loop
   Serial.println(Etimer);
 }  // end main loop
 
-
 // Functions
+
+void internalLogic5(int servoNum, int trackNumber1, int trackNumber2, int incomingFromTrack) {
+  if (trackStates[trackNumber1] == 1 || trackStates[trackNumber2] == 1) {
+    // if either of the tracks are occupied.
+    if (trackStates[trackNumber1] == 1) {
+      Serial.println("Track 1 is occupied.");
+      // if track 1 is occupied then put train on the other one.
+      if (servoPos[servoNum] == pos[1]) {
+        servoPos[servoNum] = pos[0];
+      }
+      trackStates[trackNumber2] = 1;
+      trackStatesIO[trackNumber2][0] = 1;
+      trackStatesIO[trackNumber2][1] = Etimer;
+    } else if (trackStates[trackNumber2] == 1) {
+      // if track 2 is occupied then put train on track 1
+      Serial.println("Track 2 is occupied.");
+      if (servoPos[servoNum] == pos[0]) {
+        servoPos[servoNum] = pos[1];
+      }
+      trackStates[trackNumber1] = 1;
+      trackStatesIO[trackNumber1][0] = 1;
+      trackStatesIO[trackNumber1][1] = Etimer;
+    }
+
+  } else {
+    // if both track are available. choose a random track and put it on that.
+    Serial.println("Both tracks are available.");
+    int randomNum = random(trackNumber1, trackNumber2);
+    Serial.println(randomNum);
+    if (randomNum == trackNumber1) {
+      if (servoPos[servoNum] == pos[1]) {
+        servoPos[servoNum] = pos[0];
+        trackStates[trackNumber1] = 1;
+        trackStatesIO[trackNumber1][0] = 1;
+        trackStatesIO[trackNumber1][1] = Etimer;
+      }
+    } else if (randomNum == trackNumber2) {
+      if (servoPos[servoNum] == pos[0]) {
+        servoPos[servoNum] = pos[1];
+        trackStates[trackNumber2] = 1;
+        trackStatesIO[trackNumber2][0] = 1;
+        trackStatesIO[trackNumber2][1] = Etimer;
+      }
+    }
+  }
+  trackStates[incomingFromTrack] = 0;
+}
 
 void internalLogic4(int servoNum, int trackNumber1, int trackNumber2, int trackNumber3, int trackNumber4, int incomingFromTrack) {
   if (trackStates[trackNumber1] == 1) {  // this is checking if the inner loop is occupied, so we can know if it's safe to put a train there or not.
@@ -382,7 +425,6 @@ void internalLogic3(int servoNum, int IrNum1, int IrNum2, int trackNumber1, int 
   Serial.println("internal logic 3");
 }
 
-
 void internalLogic2(int IrNumber1, int IrNumber2, int tracknumber1, int tracknumber2, int trackInUse) {
 
   if (sensorTimes[IrNumber1] > sensorTimes[IrNumber2]) {
@@ -398,7 +440,7 @@ void internalLogic2(int IrNumber1, int IrNumber2, int tracknumber1, int tracknum
 
 void internalLogic1(int track1, int track2, int servoNumber) {  // (track number 1, track number 2, servo number)
 
-  if (servoNumber == 1) {                //|| servoNumber == 4 || servoNumber == 6 || servoNumber == 7
+  if (servoNumber == 0 || servoNumber == 5) {
     if (trackStates[track1] != 1) {      // if track one is available
       if (servoPos[servoNumber] == 0) {  // if servo position is for track 1 or track 2
         servoPos[servoNumber] = pos[1];
@@ -418,7 +460,7 @@ void internalLogic1(int track1, int track2, int servoNumber) {  // (track number
         servoPos[servoNumber] = pos[0];
         trackStates[track1] = 1;
       }
-    } else if (2 != 1) {                 // if track one is available
+    } else if (track2 != 1) {            // if track one is available
       if (servoPos[servoNumber] == 0) {  // if servo position is for track 1 or track 2
         servoPos[servoNumber] = pos[1];
         trackStates[track2] = 1;
@@ -428,13 +470,11 @@ void internalLogic1(int track1, int track2, int servoNumber) {  // (track number
   Serial.println("internal logic 1");
 }
 
-
 void readSensors() {
   for (int i = 0; i < 15; i++) {
     sensor_state[i][0] = digitalRead(IRPins[i]);
   }
 }
-
 
 // assigns and initialises the ir sensors.
 void IRInit() {
