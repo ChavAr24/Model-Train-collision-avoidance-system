@@ -2,7 +2,7 @@
    Project Name: Train Collision Avoidance System (TCAS)
    Author(s): Aryan Chavan, Benjamin Ponka
    Date Started: 2025-03-24            Submission Date: 2025-04-17
-   Version: V.1.07
+   Version: V.1.08.a
    Description: Second year Mechatronics Engineering Diploma Project in which a train collision avoidance system is made with basic sensors(IR, sonar), actuators(Servos) and microcontroller(Arduino Mega).
    Licence:
    Links:
@@ -53,7 +53,7 @@ void setup() {
   attachServos();  // attaching the pins of the servos to the object servo in code
   zeroServo();     // zero all of the servo
   zeroIRStates();
-
+  initTrackStatesIO();
 
   Serial.begin(9600);  // Serial monitor
 }
@@ -66,12 +66,11 @@ int timerDelay = 1000;   // time delay for neglecting second sensor.
 int timerDelay2 = 2500;  // timer for specific case of ir 3(case 2) and 8( case 7)
 
 int trackStates[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //  state of track numbers ( new markings)
-int trackStatesIO[4][2] = {};                       // records if the train on track was incoming or outgoing and at what time did it perform each command. (for cases 2,7, last 4 aswell.) row 0 is for track0, row 1 is for track 1, row 2 is for track 6, row 3 is for track 7.
+int trackStatesIO[9][2] = {};                       // records if the train on track was incoming or outgoing and at what time did it perform each command. (for cases 2,7, last 4 aswell.) row 0 is for track0, row 1 is for track 1, row 2 is for track 6, row 3 is for track 7.
 
 int count = 0;
 
 void loop() {  // Main Loop
-
 
   readSensors();
   for (int i = 0; i < 15; i++) {
@@ -88,6 +87,7 @@ void loop() {  // Main Loop
 
     int a = 0;  // timer check variable.
     int servoNum = 0;
+    int servoNum2 = 0;
     int IrNum1 = 0;
     int IrNum2 = 0;
     int trackNumber1 = 0;
@@ -100,7 +100,7 @@ void loop() {  // Main Loop
 
     switch (i) {
       case 0:  // logic for Ir Sensor 1
-        Serial.println("Case1");
+        Serial.println("Case0");
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
         a = Etimer - sensorTimes[1];
@@ -108,11 +108,11 @@ void loop() {  // Main Loop
         if (a > timerDelay) {
           internalLogic1(4, 2, servoNum);
         }
-        Serial.println("Case1 finish");
+        Serial.println("Case0 finish");
         break;
 
       case 1:  // Logic for Ir sensor 2
-        Serial.println("Case2");
+        Serial.println("Case1");
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
         a = Etimer - sensorTimes[0];
@@ -124,19 +124,13 @@ void loop() {  // Main Loop
         if (a > timerDelay) {
           internalLogic2(IrNum1, IrNum2, trackNumber1, trackNumber2, trackToUse);
         }
-        Serial.println("Case2 finish");
+        Serial.println("Case1 finish");
         break;
 
       case 2:  // Logic for IR sensor 3
         Serial.println("Case2");
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
-        //          a = Etimer - sensorTimes[1];
-        // check if track 0 or track 1 are being used.
-        // if any used check if train is going out or coming in by checking at what time was ir sensor 7 last triggred and checking if it was less than or more than 2.5 secs.
-        // if train is coming in (ir sensor 7 triggered less than 2.5 secs ago) then check which track is being used using the array.
-        // track 0 is used put train on track 1 and vice-versa.
-        // if none are occupied get random number 1 or 0 and use that to be the track number.
 
         servoNum = 2;  // servo number for this case.
         IrNum1 = 3;    // current ir
@@ -145,9 +139,8 @@ void loop() {  // Main Loop
         trackNumber2 = 1;
         incomingFromTrack = sensor_state[i][2];  // the track number for where the train came in from.
 
-        if (a > timerDelay) {
-          internalLogic3(servoNum, IrNum1, IrNum2, trackNumber1, trackNumber2, incomingFromTrack, currentIrPrevious);
-        }
+        internalLogic3(servoNum, IrNum1, IrNum2, trackNumber1, trackNumber2, incomingFromTrack, currentIrPrevious);
+
         Serial.println("Case2 finish");
         break;
 
@@ -167,22 +160,20 @@ void loop() {  // Main Loop
         incomingFromTrack = 2;  // This means that it was approching from track 2
         servoNum = 4;           // the servo that switches a counter-clockwise train into the inner loop.
 
-        if (a > timerDelay) {
-          internalLogic4(servoNum, trackNumber1, trackNumber2, trackNumber3, trackNumber4, incomingFromTrack);
-        }
+
+        internalLogic4(servoNum, trackNumber1, trackNumber2, trackNumber3, trackNumber4, incomingFromTrack);
+
         Serial.println("Case3 finish");
         break;
 
       case 4:  // Logic for IR sensor 5
-        Serial.println("Case1");
+        Serial.println("Case4");
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
         a = Etimer - sensorTimes[1];
-        servoNum = 0;
-        if (a > timerDelay) {
-          internalLogic1(1, 2, servoNum);
-        }
-        Serial.println("Case1 finish");
+        servoNum = 3;
+        servoNum2 = 4;
+        Serial.println("Case4 finish");
         break;
 
         // case 5:   // Logic for IR sensor 6
@@ -294,7 +285,7 @@ void loop() {  // Main Loop
         //   Serial.println("Case2 finish");
         //   break;
 
-      case 14: // Logic for IR sensor 15
+      case 14:  // Logic for IR sensor 15
         Serial.println("Case14");
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
@@ -528,4 +519,11 @@ void changeServoPos() {
   myservo6.write(servoPos[5]);
   myservo7.write(servoPos[6]);
   myservo8.write(servoPos[7]);
+}
+
+void initTrackStatesIO() {  // initialising the trackstateIO array.
+  for (int i = 0; i < 9; i++) {
+    trackStatesIO[i][0] = 0;
+    trackStatesIO[i][1] = 0;
+  }
 }
