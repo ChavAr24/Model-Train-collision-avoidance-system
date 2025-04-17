@@ -152,7 +152,7 @@ void loop() {  // Main Loop
         servoNum = 4;           // the servo that switches a counter-clockwise train into the inner loop.
 
         internalLogic4(servoNum, trackNumber1, trackNumber2, trackNumber3, trackNumber4, incomingFromTrack);
-
+       
         Serial.println("Case3 finish");
         break;
 
@@ -204,6 +204,7 @@ void loop() {  // Main Loop
       case 8:  // Logic for IR sensor 9
 
         Serial.println("Case8");
+
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
         a = Etimer - sensorTimes[9];
@@ -216,6 +217,7 @@ void loop() {  // Main Loop
           internalLogic2(IrNum1, IrNum2, trackNumber1, trackNumber2, trackToUse);
         }
         Serial.println("Case8 finish");
+
 
         break;
 
@@ -230,6 +232,7 @@ void loop() {  // Main Loop
         }
         Serial.println("Case9 finish");
         break;
+
 
       case 10:  // Logic for IR sensor 11
         Serial.println("Case10");
