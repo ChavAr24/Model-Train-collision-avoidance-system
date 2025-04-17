@@ -2,7 +2,7 @@
    Project Name: Train Collision Avoidance System (TCAS)
    Author(s): Aryan Chavan, Benjamin Ponka, Krish Patel, Namra Patel
    Date Started: 2025-03-24            Submission Date: 2025-04-17
-   Version: V.1.03
+   Version: V.1.05.b
    Description: Second year Mechatronics Engineering Diploma Project in which a train collision avoidance system is made with basic sensors(IR, sonar), actuators(Servos) and microcontroller(Arduino Mega).
    Licence:
    Links:
@@ -25,7 +25,7 @@ int sensor_state[15][3]; // each row corresponds to each sensor. cols: current s
 int nonPairedSensors[] = {3, 4, 5, 6, 7, 8, 15};
 
 // Variables for the servos
-int pos[] = {0, 30, 60, 90, 120, 150, 180};  // all of the positions we would wan the servo to be in.
+int pos[] = {0, 30, 60, 90, 120, 150, 180};  // all of the positions we would want the servo to be in.
 int servoPos[] = {0, 0, 0, 0, 0, 0, 0, 0};   // current/live servo positions.
 
 // Creating servo objects
@@ -137,7 +137,7 @@ void loop() {
               if (trackStates[trackNumber1] == 1) {
                 // track 0 is being used
                 if (servoPos[servoNum] == pos[0]) {
-                  servoPos[sevorNum] = pos[1];
+                  servoPos[servoNum] = pos[1];
                   trackStates[trackNumber2] = 1;
                   trackStates[incomingFromTrack] = 0;
                 }
@@ -145,7 +145,7 @@ void loop() {
               else if (trackStates[trackNumber2] == 1) {
                 // track 1 is being used.
                 if (servoPos[servoNum] == pos[1]) {
-                  servoPos[sevorNum] = pos[0];
+                  servoPos[servoNum] = pos[0];
                   trackStates[trackNumber1] = 1;
                   trackStates[incomingFromTrack] = 0;
                 }
@@ -177,13 +177,13 @@ void loop() {
             int randomNum = random(trackNumber1, trackNumber2);
             if (randomNum == trackNumber1) {
               if (servoPos[servoNum] == pos[1]) {
-                servoPos[sevorNum] = pos[0];
+                servoPos[servoNum] = pos[0];
                 trackStates[trackNumber1] = 1;
               }
             }
             else if (randomNum == trackNumber2) {
               if (servoPos[servoNum] == pos[0]) {
-                servoPos[sevorNum] = pos[1];
+                servoPos[servoNum] = pos[1];
                 trackStates[trackNumber2] = 1;
               }
             }
@@ -199,17 +199,42 @@ void loop() {
           Serial.println("Case1 finish");
           break;
 
-        case 3:
+        case 3:// For deciding if it should enter the internal loop, when approching from track 2
           Serial.println("Case3");
           a = Etimer - sensorTimes[0];
 
-          IrNum1 = 2;
-          IrNum2 = 3;
-          trackNumber1 = 0;
-          trackNumber2 = 1;
-          if (a > timerDelay) {
-            internalLogic2(IrNum1, IrNum2, trackNumber1, trackNumber2);
+          //IrNum1 = 3; // approching IR unneeded
+
+          trackNumber1 = 5;// This is to check if something is in the inner loop, track 5
+          trackNumber2 = 6;
+          trackNumber3 = 7;
+          trackNumber4 = 9;// This is to check if something is approching the junction from track 9, or in the center loop
+          incomingFromTrack = 2;// This means that it was approching from track 2
+          servoNum = 4; // the servo that switches a counter-clockwise train into the inner loop.
+
+
+        
+        //if (sensor_state[IrNum1][0] == LOW){
+          if (trackStates[trackNumber1] == 1){ // this is checking if the inner loop is occupied, so we can know if it's safe to put a train there or not.
+            if (servoPos[servoNum] == pos[0]) {
+                  servoPos[servoNum] = pos[1];
           }
+          else if (trackStates[trackNumber2 == 1] || trackStates[trackNumber3 == 1] || trackStates[trackNumber4 == 1] ){ // if there is an incoming(?) train
+            if (servoPos[servoNum] == pos[1]) {
+                  servoPos[servoNum] = pos[0]; // this is to shift the train into the central loop
+            trackStates[trackNumber1] = 1; //since the train is in the central loop, then set that loop as occupied
+            trackStates[incomingFromTrack] = 0;
+          }
+          else {
+
+            if (servoPos[servoNum] == pos[0]) {
+                  servoPos[servoNum] = pos[1];
+          }
+        //}
+
+          // if (a > timerDelay) {
+          //   internalLogic2(IrNum1, IrNum2, trackNumber1, trackNumber2);
+          // }
           Serial.println("Case3 finish");
           break;
 
