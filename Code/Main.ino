@@ -212,17 +212,25 @@ void loop() {  // Main Loop
         Serial.println("Case7");
         currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
         sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
-        servoNum = 2;                        // servo number for this case.
-        IrNum1 = 7;                          // current ir
-        IrNum2 = 3;                          // opposing ir
+        //          a = Etimer - sensorTimes[1];
+        // check if track 0 or track 1 are being used.
+        // if any used check if train is going out or coming in by checking at what time was ir sensor 7 last triggred and checking if it was less than or more than 2.5 secs.
+        // if train is coming in (ir sensor 7 triggered less than 2.5 secs ago) then check which track is being used using the array.
+        // track 0 is used put train on track 1 and vice-versa.
+        // if none are occupied get random number 1 or 0 and use that to be the track number.
+
+        servoNum = 5;  // servo number for this case.
+        IrNum1 = 7;    // current ir
+        IrNum2 = 3;    // opposing ir
         trackNumber1 = 0;
         trackNumber2 = 1;
-        incomingFromTrack = sensor_state[i][2];  // the track number for where the train came in from.
+        incomingFromTrack = sensor_state[i][3];  // the track number for where the train came in from.
 
         if (a > timerDelay) {
           internalLogic3(servoNum, IrNum1, IrNum2, trackNumber1, trackNumber2, incomingFromTrack, currentIrPrevious);
         }
         Serial.println("Case7 finish");
+
         break;
 
       case 8:  // Logic for IR sensor 9
