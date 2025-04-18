@@ -67,7 +67,7 @@ void loop() {  // Main Loop
           count += 1;
         }
       }
-
+      
       int a = 0;  // timer check variable.
       int servoNum = 0;   // servo number for each case. 0 is servo 1 and 7 is servo 8
       int servoNum2 = 0;    // servo number for a specific case. 0 is servo 1 and 7 is servo 8
@@ -127,22 +127,23 @@ void loop() {  // Main Loop
           break;
 
         case 3:  // Logic for IR sensor 4
-                 // For deciding if it should enter the internal loop, when approching from track 2
-          Serial.println("Case3");
-          currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
-          sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
-          //IrNum1 = 3; // approching IR unneeded
-          trackNumber1 = 5;  // This is to check if something is in the inner loop, track 5
-          trackNumber2 = 6;
-          trackNumber3 = 7;
-          trackNumber4 = 9;       // This is to check if something is approching the junction from track 9, or in the center loop
-          incomingFromTrack = 2;  // This means that it was approching from track 2
-          servoNum = 3;           // the servo that switches a counter-clockwise train into the inner loop.
+               // For deciding if it should enter the internal loop, when approching from track 2
+        Serial.println("Case3");
+        currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
+        sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
+        //IrNum1 = 3; // approching IR unneeded
+        trackNumber1 = 5;  // This is to check if something is in the inner loop, track 5
+        trackNumber2 = 6;
+        trackNumber3 = 7;
+        trackNumber4 = 9;             // This is to check if something is approching the junction from track 9, or in the center loop
+        incomingFromTrack = 2;        // This means that it was approching from track 2
+        servoNum = 4;                 // the servo that switches a counter-clockwise train into the inner loop.
+        a = Etimer - sensorTimes[4];  // This takes the time since IR 4 was hit
 
-          internalLogic4(servoNum, trackNumber1, trackNumber2, trackNumber3, trackNumber4, incomingFromTrack);
-
-          Serial.println("Case3 finish");
-          break;
+        internalLogic4(servoNum, trackNumber1, trackNumber2, trackNumber3, trackNumber4, incomingFromTrack, a);
+        
+        Serial.println("Case3 finish");
+        break;
 
         case 4:  // Logic for IR sensor 5
           Serial.println("Case4");
@@ -162,21 +163,24 @@ void loop() {  // Main Loop
           break;
 
         case 6:  // Logic for IR sensor 7
-          Serial.println("Case1");
-          currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
-          sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
-          //IrNum1 = 3; // approching IR unneeded
-          trackNumber1 = 5;  // This is to check if something is in the inner loop, track 5
-          trackNumber2 = 6;
-          trackNumber3 = 7;
-          trackNumber4 = 9;       // This is to check if something is approching the junction from track 9, or in the center loop
-          incomingFromTrack = 2;  // This means that it was approching from track 2
-          servoNum = 4;           // the servo that switches a counter-clockwise train into the inner loop.
+        Serial.println("Case6");
 
-          internalLogic4(servoNum, trackNumber1, trackNumber2, trackNumber3, trackNumber4, incomingFromTrack);
+        currentIrPrevious = sensorTimes[i];  // stores the previous time of the current sensor.
+        sensorTimes[i] = Etimer;             // appends the trip time of the current sensor
 
-          Serial.println("Case1 finish");
-          break;
+        trackNumber1 = 5;  // This is to check if something is in the inner loop, track 5
+        trackNumber2 = 6;
+        trackNumber3 = 7;
+        trackNumber4 = 8;             // This is to check if something is approching the junction from track 8, or in the center loop
+        incomingFromTrack = 3;        // This means that it was approching from track 3
+        servoNum = 3;                 // the servo that switches a counter-clockwise train into the inner loop.
+        a = Etimer - sensorTimes[4];  // This takes the time since IR 4 was hit
+
+        internalLogic4(servoNum, trackNumber1, trackNumber2, trackNumber3, trackNumber4, incomingFromTrack, a);
+
+        Serial.println("Case6 finish");
+
+        break;
 
         case 7:  // Logic for IR sensor 8
           Serial.println("Case7");
@@ -295,6 +299,38 @@ void loop() {  // Main Loop
 
 // Functions
 
+
+void internalLogic15(int trackNumber1, int trackNumber2, int servoNum1, int servoNum2) {
+  if (trackStates[trackNumber1] == 0) {  //if the inner track is clear, open both servos, on a delay
+    trackStates[trackNumber2] = 0;       //clears the inner loop
+    trackStates[trackNumber1] = 1;       // occupies the loop it is headed too
+
+    // This is opening the inner loop
+    if (servoPos[servoNum1] == pos[1] && servoPos[servoNum2] == pos[1]) {
+      servoPos[servoNum1] = pos[0];
+      delay(100);
+      //does a brief delay to avoid too many sensor switches THIS MIGHT CAUSE ISSUES
+      // This only happens if BOTH need to switch
+      servoPos[servoNum2] = pos[0];
+    } else if (servoPos[servoNum1] == pos[1]) {
+      servoPos[servoNum1] = pos[0];
+    } else if (servoPos[servoNum2] == pos[1]) {
+      servoPos[servoNum2] = pos[0];
+    }
+    //CLOSING THE LOOP INSTEAD, SAME PROCESS but switched numbers
+  } else {
+    if (servoPos[servoNum1] == pos[0] && servoPos[servoNum2] == pos[0]) {
+      servoPos[servoNum1] = pos[1];
+      delay(100);
+      //does a brief delay to avoid too many sensor switches THIS MIGHT CAUSE ISSUES
+      // This only happens if BOTH need to switch
+      servoPos[servoNum2] = pos[1];
+    } else if (servoPos[servoNum1] == pos[0]) {
+      servoPos[servoNum1] = pos[1];
+    } else if (servoPos[servoNum2] == pos[0]) {
+      servoPos[servoNum2] = pos[1];
+    }
+    
 void internalLogic6(int incomingFromTrack, int trackNumber1, int trackNumber2) {
   // train is going out.
   if (trackStates[trackNumber1] == 1 && trackStates[trackNumber2] == 1) {
@@ -340,13 +376,16 @@ void internalLogic5(int servoNum, int trackNumber1, int trackNumber2, int incomi
         servoPos[servoNum] = pos[0];
       }
       updateTrackStates(trackNumber2, 1);
+
     } else if (trackStates[trackNumber2] == 1) {
       // if track 2 is occupied then put train on track 1
       Serial.println("Track 2 is occupied.");
       if (servoPos[servoNum] == pos[0]) {
         servoPos[servoNum] = pos[1];
       }
+
       updateTrackStates(trackNumber1, 1);
+
     }
 
   } else {
@@ -355,36 +394,47 @@ void internalLogic5(int servoNum, int trackNumber1, int trackNumber2, int incomi
     int randomNum = random(trackNumber1, trackNumber2);
     Serial.println(randomNum);
     if (randomNum == trackNumber1) {
+
       if (servoPos[servoNum] == pos[1]) {
         servoPos[servoNum] = pos[0];
-        updateTrackStates(trackNumber1, 1);
+        trackStates[trackNumber1] = 1;
+        trackStatesIO[trackNumber1][0] = 1;
+        trackStatesIO[trackNumber1][1] = Etimer;
       }
     } else if (randomNum == trackNumber2) {
       if (servoPos[servoNum] == pos[0]) {
         servoPos[servoNum] = pos[1];
-        updateTrackStates(trackNumber2, 1);
+        trackStates[trackNumber2] = 1;
+        trackStatesIO[trackNumber2][0] = 1;
+        trackStatesIO[trackNumber2][1] = Etimer;
       }
     }
   }
   trackStates[incomingFromTrack] = 0;
 }
 
-void internalLogic4(int servoNum, int trackNumber1, int trackNumber2, int trackNumber3, int trackNumber4, int incomingFromTrack) {
-  if (trackStates[trackNumber1] == 1) {  // this is checking if the inner loop is occupied, so we can know if it's safe to put a train there or not.
-    if (servoPos[servoNum] == pos[0]) {
-      servoPos[servoNum] = pos[1];
-    } else if (trackStates[trackNumber2 == 1] || trackStates[trackNumber3 == 1] || trackStates[trackNumber4 == 1]) {  // if there is an incoming(?) train
-      if (servoPos[servoNum] == pos[1]) {
-        servoPos[servoNum] = pos[0];  // this is to shift the train into the central loop
-        updateTrackStates(trackNumber1, 1);
-        updateTrackStates(incomingFromTrack, 0);
-      } else {
+// I am fixing this right now
+void internalLogic4(int servoNum, int trackNumber1, int trackNumber2, int trackNumber3, int trackNumber4, int incomingFromTrack, int a) {
+  if (a > 4 * timerDelay) {  // TLDR, if sensor 4 was NOT hit recently, do this section, this is multiplied to make up for the gap
 
-        if (servoPos[servoNum] == pos[0]) {
-          servoPos[servoNum] = pos[1];
+    if (trackStates[trackNumber1] == 1) {  // this is checking if the inner loop is occupied, so we can know if it's safe to put a train there or not.
+      if (servoPos[servoNum] == pos[0]) {
+        servoPos[servoNum] = pos[1];
+      } else if (trackStates[trackNumber2 == 1] || trackStates[trackNumber3 == 1] || trackStates[trackNumber4 == 1]) {  // if there is an incoming(?) train
+        if (servoPos[servoNum] == pos[1]) {
+          servoPos[servoNum] = pos[0];    // this is to shift the train into the central loop
+          trackStates[trackNumber1] = 1;  //since the train is in the central loop, then set that loop as occupied
+          trackStates[incomingFromTrack] = 0;
+        } else {
+
+          if (servoPos[servoNum] == pos[0]) {
+            servoPos[servoNum] = pos[1];
+          }
         }
       }
     }
+  } else {
+    trackStates[4] = 0;  //Since sensor 4 was just hit, this is leaving, clear the track
   }
 }
 
