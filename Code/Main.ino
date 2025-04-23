@@ -2,7 +2,7 @@
    Project Name: Train Collision Avoidance System (TCAS)
    Author(s): Aryan Chavan, Benjamin Ponka
    Date Started: 2025-03-24            Submission Date: 2025-04-17
-   Version: V.2.03.a
+   Version: V.2.03.b
    Description: Second year Mechatronics Engineering Diploma Project in which a train collision avoidance system is made with basic sensors(IR, sonar), actuators(Servos) and microcontroller(Arduino Mega).
    Licence:
    Links:
@@ -12,7 +12,7 @@
 //Dependancies
 #include <Servo.h>
 
-#define ledpin 13
+#define ledpin 13 //for debugging
 
 // Setting up the Ir Pins
 int IRPins[15] = { 22, 23, 24, 25, 26, 27, 28, 29, A12, A13, A14, A15, 39, 40, 41 };  //not using 38 as it is an timer pin.
@@ -54,7 +54,7 @@ int timerDelay = 7;   // time delay for neglecting second sensor.
 int timerDelay2 = 7;  // timer for specific case of ir 3(case 2) and 8( case 7)
 int timerDelay3 = 10;
 
-int trackStates[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0};  //  state of track numbers ( new markings)
+int trackStates[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  //  state of track numbers ( new markings)
 int trackStatesIO[9][2] = {};                       // state, time       // records if the train on track was incoming or outgoing and at what time did it perform each command. (for cases 2,7, last 4 aswell.) row 0 is for track0, row 1 is for track 1, row 2 is for track 6, row 3 is for track 7.
 
 int count = 0;
@@ -435,7 +435,7 @@ void displaytrackstates() {
     Serial.print(trackStates[i]);
     // Serial.println(trackStatesIO[i][0]);
     // Serial.println(trackStatesIO[i][1]);
-  }
+  }//this is for debugging, so we can see which tracks are/aren't active
 }
 
 void internalLogic15(int trackNumber1, int trackNumber2, int servoNum1, int servoNum2) {
@@ -477,7 +477,7 @@ void internalLogic6(int incomingFromTrack, int trackNumber1, int trackNumber2) {
   // train is going out.
   if (trackStates[trackNumber1] == 1 && trackStates[trackNumber2] == 1) {
     //both track are occupied.
-    if (trackStatesIO[trackNumber1][1] > trackStatesIO[trackNumber2][1]) {
+    if (trackStatesIO[trackNumber1][1] >= trackStatesIO[trackNumber2][1]) {
       // track 1 was just changed so it is not the train that is going out.
       updateTrackStates(trackNumber1, 0);
     } else if (trackStatesIO[trackNumber1][1] < trackStatesIO[trackNumber2][1]) {
@@ -579,7 +579,7 @@ void internalLogic4(int servoNum, int trackNumber1, int trackNumber2, int trackN
 
 void internalLogic3(int servoNum, int IrNum1, int IrNum2, int trackNumber1, int trackNumber2, int incomingFromTrack, int currentIrPrevious) {
   if (trackStates[trackNumber1] == 1 || trackStates[trackNumber2] == 1) {
-    if (Etimer - sensorTimes[IrNum2] < timerDelay2) {
+    if (Etimer - sensorTimes[IrNum2] <= timerDelay2) {
       // train coming in
       if (trackStates[trackNumber1] == 1) {
         // track 0 is being used
@@ -600,7 +600,7 @@ void internalLogic3(int servoNum, int IrNum1, int IrNum2, int trackNumber1, int 
       // train going out.
       if (trackStates[trackNumber1] == 1 && trackStates[trackNumber2] == 1) {
         // both tracks are occupied.
-        if (trackStatesIO[trackNumber1][1] > trackStatesIO[trackNumber2][1]) {
+        if (trackStatesIO[trackNumber1][1] >= trackStatesIO[trackNumber2][1]) {
           // track 0 time is greater which means this train is not the one going out.
           updateTrackStates(trackNumber2, 0);
         } else if (trackStatesIO[trackNumber1][1] < trackStatesIO[trackNumber2][1]) {
@@ -657,13 +657,13 @@ void internalLogic1(int track1, int track2, int servoNumber, int incomingFrom) {
     int randNum = random(0, 1);
     if (randNum == 0) {
       // put on track 1.
-      if (servoPos[servoNumber] == 0) {  // if servo position is for track 1 or track 2
+      if (servoPos[servoNumber] == pos[0]) {  // if servo position is for track 1 or track 2
         servoPos[servoNumber] = pos[1];
       }
       updateTrackStates(track1, 1);
     } else if (randNum == 1) {
       // put on track 1.
-      if (servoPos[servoNumber] == 1) {  // if servo position is for track 1 or track 2
+      if (servoPos[servoNumber] == pos[1]) {  // if servo position is for track 1 or track 2
         servoPos[servoNumber] = pos[0];
       }
       updateTrackStates(track1, 1);
