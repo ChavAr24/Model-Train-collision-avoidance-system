@@ -1,11 +1,11 @@
 /*
    Project Name: Train Collision Avoidance System (TCAS)
    Author(s): Aryan Chavan, Benjamin Ponka
-   Date Started: 2025-03-24            Submission Date: 2025-04-17
-   Version: V.2.04
+   Date Started: 2025-03-24            Submission Date: 2025-04-__
+   Version: V.2.05
    Description: Second year Mechatronics Engineering Diploma Project in which a train collision avoidance system is made with basic sensors(IR, sonar), actuators(Servos) and microcontroller(Arduino Mega).
    Licence:
-   Links:
+   Links: https://github.com/ChavAr24/Model-Train-collision-avoidance-system.git
    Development Board: Arduino Mega 2560
 */
 
@@ -13,12 +13,12 @@
 #include <Servo.h>
 
 #define ledpin 13  //for debugging
+#define softReset 11  // for resetting the code without having to power it off and being able to test faster. // this pin mimics a push button. when the pin is grounded the button is pressed.
 
 // Setting up the Ir Pins
 int IRPins[15] = { 22, 23, 24, 25, 26, 27, 28, 29, A12, A13, A14, A15, 39, 40, 41 };  //not using 38 as it is an timer pin.
 
 // Variables related to the IR sensor.
-// Try to put this in an array.
 int sensor_state[15][3];  // each row corresponds to each sensor. cols: current state, last state, on track number.
 
 // Variables for the servos
@@ -37,27 +37,24 @@ Servo myservo8;
 
 void setup() {
   pinMode(ledpin, OUTPUT);
+  pinMode(softReset, INPUT_PULLUP);    // initializes pin 11 to be a soft reset pin.
   IRInit();        // initialize the sensor pins as inputs and setting them to HIGH.
   attachServos();  // attaching the pins of the servos to the object servo in code
   zeroServo();     // zero all of the servo
   zeroIRStates();
   initTrackStatesIO();  // sets the vaules in this array to be 0 in all elements
-
   Serial.begin(9600);  // Serial monitor init
   delay(1000);
 }
 
 // New Logic
-unsigned int Etimer = 1;  //Global timer (running eternally).
+unsigned int Etimer = 0;  //Global timer (running eternally).
 int sensorTimes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 int timerDelay = 7;   // time delay for neglecting second sensor.
 int timerDelay2 = 7;  // timer for specific case of ir 3(case 2) and 8( case 7)
 int timerDelay3 = 10;
 
-int trackStates[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //  state of track numbers ( new markings)
-int trackStatesIO[9][2] = {};                          // state, time       // records if the train on track was incoming or outgoing and at what time did it perform each command. (for cases 2,7, last 4 aswell.) row 0 is for track0, row 1 is for track 1, row 2 is for track 6, row 3 is for track 7.
-
-int count = 0;
+int trackStatesIO[10][2] = {};                          // state, time       // records if the train on track was incoming or outgoing and at what time did it perform each command. (for cases 2,7, last 4 aswell.) row 0 is for track0, row 1 is for track 1, row 2 is for track 6, row 3 is for track 7.
 
 void loop() {  // Main Loop
 
@@ -65,14 +62,6 @@ void loop() {  // Main Loop
   for (int i = 0; i < 15; i++) {
 
     if (sensor_state[i][0] == LOW) {
-      // if (count == 0 || count == 1) {
-      //   // change the state of the track number of the ir sensor that was just triggered.
-      //   if (trackStates[sensor_state[i][2]] == 0) {
-      //     updateTrackStates(sensor_state[i][2], 1);
-      //     count += 1;
-      //   }
-      // }
-
       int a = 0;                  // timer check variable.
       int b = 0;                  // timer check variable.
       int servoNum = 0;           // servo number for each case. 0 is servo 1 and 7 is servo 8
@@ -426,12 +415,12 @@ void displaytrackstates() {
 }
 
 void internalLogic15(int trackNumber1, int trackNumber2, int servoNum1, int servoNum2) {
-  if (trackStates[trackNumber1] == 0) {  //if the inner track is clear, open both servos, on a delay
-    // trackStates[trackNumber2] = 0;       //clears the inner loop
+  if (trackStatesIO[trackNumber1] == 0) {  //if the inner track is clear, open both servos, on a delay
+    // trackStatesIO[trackNumber2] = 0;       //clears the inner loop
     Serial.print("Updating track state");
     Serial.print(trackNumber2);
     updateTrackStates(trackNumber2, 0);  // the new implementation of this
-    // trackStates[trackNumber1] = 1;       // occupies the loop it is headed too
+    // trackStatesIO[trackNumber1] = 1;       // occupies the loop it is headed too
     Serial.print("Updating track state");
     Serial.print(trackNumber1);
     updateTrackStates(trackNumber1, 1);
@@ -476,7 +465,7 @@ void internalLogic15(int trackNumber1, int trackNumber2, int servoNum1, int serv
 
 void internalLogic6(int incomingFromTrack, int trackNumber1, int trackNumber2) {
   // train is going out.
-  if (trackStates[trackNumber1] == 1 && trackStates[trackNumber2] == 1) {
+  if (trackStatesIO[trackNumber1] == 1 && trackStatesIO[trackNumber2] == 1) {
     //both track are occupied.
     if (trackStatesIO[trackNumber1][1] >= trackStatesIO[trackNumber2][1]) {
       // track 1 was just changed so it is not the train that is going out.
@@ -490,12 +479,12 @@ void internalLogic6(int incomingFromTrack, int trackNumber1, int trackNumber2) {
       updateTrackStates(trackNumber2, 0);
     }
 
-  } else if (trackStates[trackNumber1] == 1 && trackStates[trackNumber2] == 0) {
+  } else if (trackStatesIO[trackNumber1] == 1 && trackStatesIO[trackNumber2] == 0) {
     // track 1 is occupied other is available.
     Serial.print("Updating track state");
     Serial.print(trackNumber1);
     updateTrackStates(trackNumber1, 0);
-  } else if (trackStates[trackNumber1] == 0 && trackStates[trackNumber2] == 1) {
+  } else if (trackStatesIO[trackNumber1] == 0 && trackStatesIO[trackNumber2] == 1) {
     // track 2 is occupied other is available.
     Serial.print("Updating track state");
     Serial.print(trackNumber2);
@@ -509,18 +498,18 @@ void internalLogic6(int incomingFromTrack, int trackNumber1, int trackNumber2) {
 // updates both array for track states
 void updateTrackStates(int trackNum, int stateTo) {
   if (stateTo == 0) {
-    trackStates[trackNum] = 0;
+    // trackStates[trackNum] = 0;
     trackStatesIO[trackNum][0] = 0;
     trackStatesIO[trackNum][1] = Etimer;
   } else if (stateTo == 1) {
-    trackStates[trackNum] = 1;
+    // trackStates[trackNum] = 1;
     trackStatesIO[trackNum][0] = 1;
     trackStatesIO[trackNum][1] = Etimer;
   }
 }
 
 void internalLogic5(int servoNum, int trackNumber1, int trackNumber2, int incomingFromTrack) {
-  if (trackStates[trackNumber1] == 1 && trackStates[trackNumber2] == 1) {
+  if (trackStatesIO[trackNumber1] == 1 && trackStatesIO[trackNumber2] == 1) {
     // if both track are available. choose a random track and put it on that.
     Serial.println("Both tracks are available.");
     int randomNum = random(0, 1);
@@ -541,9 +530,9 @@ void internalLogic5(int servoNum, int trackNumber1, int trackNumber2, int incomi
       updateTrackStates(trackNumber2, 1);
     }
   }
-  else if (trackStates[trackNumber1] == 1 || trackStates[trackNumber2] == 1) {
+  else if (trackStatesIO[trackNumber1] == 1 || trackStatesIO[trackNumber2] == 1) {
     // if either of the tracks are occupied.
-    if (trackStates[trackNumber1] == 1) {
+    if (trackStatesIO[trackNumber1] == 1) {
       Serial.println("Track 1 is occupied.");
       // if track 1 is occupied then put train on the other one.
       if (servoPos[servoNum] == pos[1]) {
@@ -553,7 +542,7 @@ void internalLogic5(int servoNum, int trackNumber1, int trackNumber2, int incomi
       Serial.print(trackNumber2);
       updateTrackStates(trackNumber2, 1);
 
-    } else if (trackStates[trackNumber2] == 1) {
+    } else if (trackStatesIO[trackNumber2] == 1) {
       // if track 2 is occupied then put train on track 1
       Serial.println("Track 2 is occupied.");
       if (servoPos[servoNum] == pos[0]) {
@@ -572,17 +561,17 @@ void internalLogic5(int servoNum, int trackNumber1, int trackNumber2, int incomi
 void internalLogic4(int servoNum, int trackNumber1, int trackNumber2, int trackNumber3, int trackNumber4, int incomingFromTrack, int a) {
   if (a > 4 * timerDelay) {  // TLDR, if sensor 4 was NOT hit recently, do this section, this is multiplied to make up for the gap
 
-    if (trackStates[trackNumber1] == 1) {  // this is checking if the inner loop is occupied, so we can know if it's safe to put a train there or not.
+    if (trackStatesIO[trackNumber1] == 1) {  // this is checking if the inner loop is occupied, so we can know if it's safe to put a train there or not.
       if (servoPos[servoNum] == pos[0]) {
         servoPos[servoNum] = pos[1];
         // Change Track States.
       }
-    } else if (trackStates[trackNumber2 == 1] || trackStates[trackNumber3 == 1] || trackStates[trackNumber4 == 1]) {  // if there is an incoming(?) train
+    } else if (trackStatesIO[trackNumber2 == 1] || trackStatesIO[trackNumber3 == 1] || trackStatesIO[trackNumber4 == 1]) {  // if there is an incoming(?) train
 
       if (servoPos[servoNum] == pos[1]) {
         servoPos[servoNum] = pos[0];    // this is to shift the train into the central loop
-        trackStates[trackNumber1] = 1;  //since the train is in the central loop, then set that loop as occupied
-        trackStates[incomingFromTrack] = 0;
+        updateTrackStates(trackNumber1, 1);  //since the train is in the central loop, then set that loop as occupied
+        updateTrackStates(incomingFromTrack, 0);;
       } else {
         if (servoPos[servoNum] == pos[0]) {
           servoPos[servoNum] = pos[1];
@@ -593,8 +582,7 @@ void internalLogic4(int servoNum, int trackNumber1, int trackNumber2, int trackN
   } else {
     Serial.print("Updating track state");
     Serial.print("4");
-    updateTrackStates(4, 0);
-    // trackStates[4] = 0;  //Since sensor 4 was just hit, this is leaving, clear the track
+    updateTrackStates(4, 0);//Since sensor 4 was just hit, this is leaving, clear the track
   }
 }
 
@@ -701,7 +689,7 @@ void internalLogic2(int IrNumber1, int IrNumber2, int tracknumber1, int tracknum
 
 void internalLogic1(int track1, int track2, int servoNumber, int incomingFrom) {  // (track number 1, track number 2, servo number)
   Serial.println("In logic 1");
-  if (trackStates[track1] == 0 && trackStates[track2] == 0) {
+  if (trackStatesIO[track1] == 0 && trackStatesIO[track2] == 0) {
     Serial.println("none of the tracks are occupied.");
 
     int randNum = random(0, 1);
@@ -720,16 +708,16 @@ void internalLogic1(int track1, int track2, int servoNumber, int incomingFrom) {
       }
       updateTrackStates(track2, 1);
     }
-  } else if (trackStates[track1] == 0 || trackStates[track2] == 0) {
+  } else if (trackStatesIO[track1] == 0 || trackStatesIO[track2] == 0) {
     Serial.println("either of the tracks are occupied.");
-    if (trackStates[track1] == 0) {  // if track one is available
+    if (trackStatesIO[track1] == 0) {  // if track one is available
       Serial.println("track 1 is open.");
       if (servoPos[servoNumber] == pos[0]) {  // if servo position is for track 1 or track 2
         Serial.println("servoPos is 0");
         servoPos[servoNumber] = pos[1];
       }
       updateTrackStates(track1, 1);
-    } else if (trackStates[track2] == 0) {  // if track one is available
+    } else if (trackStatesIO[track2] == 0) {  // if track one is available
       Serial.println("track 2 is open.");
       if (servoPos[servoNumber] == pos[1]) {  // if servo position is for track 1 or track 2
         Serial.println("servoPos is 1");
@@ -826,8 +814,24 @@ void changeServoPos() {
 }
 
 void initTrackStatesIO() {  // initialising the trackstateIO array.
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < 10; i++) {
     trackStatesIO[i][0] = 0;
     trackStatesIO[i][1] = 0;
   }
+}
+
+void softRST(){
+  
+  // If Running serial monitor in arduino IDE
+  // print 10 empty serial lines.
+
+  // If running serial monitor in python serial monitor.
+  // print
+
+  // common for both
+  // reset all servos.
+  // reset all ir trackStates
+  // reset all array that need to be 0 
+  // reset the global Timer
+
 }
